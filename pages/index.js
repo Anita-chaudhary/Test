@@ -1,131 +1,161 @@
-import Head from 'next/head';
-import styles from '../styles/Home.module.css';
+import { useState } from "react";
+import styles from "../styles/Home.module.css";
+
+const initialTodos = [
+  { id: 1, title: "Task One", priority: "high", isCompleted: false },
+  { id: 2, title: "Task Two", priority: "low", isCompleted: false },
+];
 
 export default function Home() {
+  const [todos, setTodos] = useState(initialTodos);
+  const [editableTask, setEditableTask] = useState({});
+  const [currentTask, setCurrentTask] = useState({
+    title: "",
+    priority: "low",
+  });
+
+  const addNewTask = (task) => {
+    setTodos([...todos, { ...task, id: todos.length + 1, isCompleted: false }]);
+  };
+
+  const deleteTask = (id) => {
+    setTodos(todos.filter((item) => item.id !== id));
+  };
+
+  const completeToggle = (item) => {
+    setEditableTask(item);
+    setTodos(
+      todos.map((t) =>
+        t.id === item.id ? { ...t, isCompleted: !t.isCompleted } : t
+      )
+    );
+  };
+
+  const editTask = (task) => {
+    setCurrentTask(task);
+    setEditableTask(task);
+  };
+
+  const updateTask = (updateId) => {
+    setTodos(
+      todos.map((task) => (task.id === updateId ? { ...currentTask } : task))
+    );
+    setEditableTask(null);
+  };
+
+  const handleChange = (event) => {
+    setCurrentTask({
+      ...currentTask,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+  const submitForm = (e) => {
+    e.preventDefault();
+    if (currentTask.id) {
+      updateTask(currentTask.id);
+    } else {
+      addNewTask(currentTask);
+    }
+    setCurrentTask({ title: "", priority: "low" });
+  };
+
+  const priorityObj = {
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  const sortedTodos = [...todos]
+    .sort((a, b) => priorityObj[b.priority] - priorityObj[a.priority])
+    .sort((a, b) => a.isCompleted - b.isCompleted);
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing <code>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
+    <>
+      <div className={styles.container}>
+        <h1 style={{ textAlign: "center" }}>Task Management App</h1>
+        {sortedTodos.map((item, ind) => {
+          return (
+            <div
+              key={item.id}
+              className={styles.taskList}
+              style={{
+                textDecoration: item.isCompleted ? "line-through" : "none",
+              }}
+            >
+              <h4
+                style={{
+                  color:
+                    item.priority == "high"
+                      ? "red"
+                      : item.priority == "medium"
+                      ? "orange"
+                      : "green",
+                }}
+              >
+                {ind + 1} - Title: {item.title}
+              </h4>
+              <div className="title_div">
+                <div className={styles.priority} style={{ padding: "16px" }}>
+                  Priority: {item.priority}
+                </div>
+                <button
+                  style={{ margin: "16px" }}
+                  onClick={() => editTask(item)}
+                >
+                  Edit
+                </button>
+                <button
+                  style={{ margin: "16px" }}
+                  onClick={() => deleteTask(item.id)}
+                >
+                  Delete
+                </button>
+                <button
+                  style={{ marginInline: "16px", minWidth: "110px" }}
+                  onClick={() => completeToggle(item)}
+                >
+                  {item.isCompleted ? "Undo" : "Mark Complete"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {/***********FORM FOR INPUT VALUES **************/}
+        <form onSubmit={(e) => submitForm(e)} className={styles.taskForm}>
+          <h2 style={{ textAlign: "center" }}>Input Form</h2>
+          <input
+            type="text"
+            onChange={(event) => handleChange(event)}
+            name="title"
+            placeholder="Task title"
+            value={currentTask.title}
+            required
+            className={styles.inputText}
+          />
+          <select
+            onChange={handleChange}
+            name="priority"
+            className={styles.selectPriority}
           >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel" className={styles.logo} />
-        </a>
-      </footer>
-
-      <style jsx>{`
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        footer img {
-          margin-left: 0.5rem;
-        }
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          text-decoration: none;
-          color: inherit;
-        }
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family:
-            Menlo,
-            Monaco,
-            Lucida Console,
-            Liberation Mono,
-            DejaVu Sans Mono,
-            Bitstream Vera Sans Mono,
-            Courier New,
-            monospace;
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family:
-            -apple-system,
-            BlinkMacSystemFont,
-            Segoe UI,
-            Roboto,
-            Oxygen,
-            Ubuntu,
-            Cantarell,
-            Fira Sans,
-            Droid Sans,
-            Helvetica Neue,
-            sans-serif;
-        }
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
-    </div>
+          <button type="submit" className={styles.submitButton}>
+            {currentTask.id ? "Update Task" : "Add Task"}
+          </button>
+        </form>
+      </div>
+    </>
   );
+}
+
+export async function getServerSideProps() {
+  return {
+    props: {
+      initialTodos,
+    },
+  };
 }
